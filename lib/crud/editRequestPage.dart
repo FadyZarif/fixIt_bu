@@ -4,6 +4,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -42,11 +43,14 @@ class _EditRequestPageState extends State<EditRequestPage> {
 
   bool isSubType = true;
   PlatformFile? pickedFile;
+  var url;
+
   Future uploadImagesCamera() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result == null) return;
     setState(() {
       pickedFile = result.files.first;
+
     });
   }
   getData() {
@@ -100,12 +104,25 @@ class _EditRequestPageState extends State<EditRequestPage> {
 
 
 
-  edit() {
+  edit() async {
     var formdata = formstate.currentState;
     if (formdata!.validate()) {
         if (branchValidation()) {
       } else if (typeValidation()) {
       } else {
+          if(pickedFile != null )  {
+            final path = 'problemImages/${pickedFile!.name}';
+            final file = File(pickedFile!.path!);
+            final ref = FirebaseStorage.instance.ref().child(path);
+            ref.putFile(file);
+            url = await ref.getDownloadURL();
+          }
+          else if(pickedFile == null && imgUrl != null){
+            imgUrl = widget.docList['imgUrl'];
+          }
+          else{
+            url = null;
+          }
         AwesomeDialog(
           context: context,
           dialogType: DialogType.QUESTION,
@@ -126,7 +143,8 @@ class _EditRequestPageState extends State<EditRequestPage> {
               "Room": symbol??null,
               "EditorId": "${user!.uid}",
               "EditorName": "${userData[0]['Name']}",
-              "Details": "${details.text}"
+              "Details": "${details.text}",
+              "imgUrl": url
             });
           },
         ).show();
@@ -480,6 +498,19 @@ class _EditRequestPageState extends State<EditRequestPage> {
                         )
                       ],
                     ),
+                    SizedBox(height: 20,),
+                    if(imgUrl != null)
+                      Visibility(
+                        visible: true,
+                        child: Container(
+                            width: double.infinity,
+                            color: Colors.blue[100],
+                            child: Image.network(
+                              "$imgUrl",
+                              fit: BoxFit.cover,
+                            )
+                        ),
+                      ),
                   ],
                 ),
               ),

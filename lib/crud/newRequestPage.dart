@@ -168,7 +168,7 @@ class _NewRequestPageState extends State<NewRequestPage> {
           btnOkIcon: Icons.done,
           btnOkText: "نعم,ارسال",
           btnOkOnPress: () async {
-            if(pickedFile != null) {
+            if(pickedFile != null ) {
               final path = 'problemImages/${pickedFile!.name}';
               final file = File(pickedFile!.path!);
               final ref = FirebaseStorage.instance.ref().child(path);
@@ -395,7 +395,7 @@ class _NewRequestPageState extends State<NewRequestPage> {
                       const SizedBox(
                         height: 20,
                       ),
-                      
+
                       Container(
                         margin: const EdgeInsets.only(top: 10),
                         child: const Text(
