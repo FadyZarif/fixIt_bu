@@ -23,22 +23,41 @@ class _EditRequestPageState extends State<EditRequestPage> {
       new TextEditingController(text: "${widget.docList["Details"]}");
   late var branch = widget.docList['Branch'],
       building = widget.docList['Building'];
-  late var type = widget.docList['Type'], symbol = widget.docList['Room'],floor = widget.docList['Floor'],subType = widget.docList['subType'],imgUrl = widget.docList['imgUrl'];
+  late var type = widget.docList['Type'],
+      symbol = widget.docList['Room'],
+      floor = widget.docList['Floor'],
+      subType = widget.docList['subType'],
+      imgUrl = widget.docList['imgUrl'];
   List userData = [];
   User? user = FirebaseAuth.instance.currentUser;
-  int subTypeIndex=2,floorIndex=0;
+  int subTypeIndex = 2, floorIndex = 0;
   List<List> subTypeList = [
-    ['اعطال اضائه ','فيش ','وصلات كهربا ','احمال تكيفات ','قاطع في لوحه ','عدم وجود مصدر كهرباء '],
-    ['عدم وجود مصدر كهرباء ','ضعف ','توصيل ','كابلات '],
+    [
+      'اعطال اضائه ',
+      'فيش ',
+      'وصلات كهربا ',
+      'احمال تكيفات ',
+      'قاطع في لوحه ',
+      'عدم وجود مصدر كهرباء '
+    ],
+    ['عدم وجود مصدر كهرباء ', 'ضعف ', 'توصيل ', 'كابلات '],
     ['لا يوجد'],
-    ['انقطاع تيار','مفيش بروده','لا يعمل'],
-    ['تسريب مياه ','كسر حنفية','وصلات مياه','انسداد صرف '],
-    ['تركيب كالون','تركيب قلب ','خلع  باب  ','كسر باب ','تركيب رزه ','كسر بنش ','مشكلة سبورة '],
-    ['كسر ','تركيب شبابيك الوميتال ','تركيب زجاج '],
+    ['انقطاع تيار', 'مفيش بروده', 'لا يعمل'],
+    ['تسريب مياه ', 'كسر حنفية', 'وصلات مياه', 'انسداد صرف '],
+    [
+      'تركيب كالون',
+      'تركيب قلب ',
+      'خلع  باب  ',
+      'كسر باب ',
+      'تركيب رزه ',
+      'كسر بنش ',
+      'مشكلة سبورة '
+    ],
+    ['كسر ', 'تركيب شبابيك الوميتال ', 'تركيب زجاج '],
   ];
   List<List> floorList = [
-    ['0','1','2','3','4','5','6','7','8'],
-    ['0','1','2','3','4'],
+    ['0', '1', '2', '3', '4', '5', '6', '7', '8'],
+    ['0', '1', '2', '3', '4'],
   ];
 
   bool isSubType = true;
@@ -50,9 +69,9 @@ class _EditRequestPageState extends State<EditRequestPage> {
     if (result == null) return;
     setState(() {
       pickedFile = result.files.first;
-
     });
   }
+
   getData() {
     FirebaseFirestore.instance
         .collection("users")
@@ -100,29 +119,23 @@ class _EditRequestPageState extends State<EditRequestPage> {
     return false;
   }
 
-
-
-
-
   edit() async {
     var formdata = formstate.currentState;
     if (formdata!.validate()) {
-        if (branchValidation()) {
+      if (branchValidation()) {
       } else if (typeValidation()) {
       } else {
-          if(pickedFile != null )  {
-            final path = 'problemImages/${pickedFile!.name}';
-            final file = File(pickedFile!.path!);
-            final ref = FirebaseStorage.instance.ref().child(path);
-            ref.putFile(file);
-            url = await ref.getDownloadURL();
-          }
-          else if(pickedFile == null && imgUrl != null){
-            imgUrl = widget.docList['imgUrl'];
-          }
-          else{
-            url = null;
-          }
+        if (pickedFile != null) {
+          final path = 'problemImages/${pickedFile!.name}';
+          final file = File(pickedFile!.path!);
+          final ref = FirebaseStorage.instance.ref().child(path);
+          await ref.putFile(file);
+          url = await ref.getDownloadURL();
+        } else if (pickedFile == null && imgUrl != null) {
+          imgUrl = widget.docList['imgUrl'];
+        } else {
+          url = null;
+        }
         AwesomeDialog(
           context: context,
           dialogType: DialogType.QUESTION,
@@ -137,10 +150,10 @@ class _EditRequestPageState extends State<EditRequestPage> {
             problemRef.doc(widget.docid).update({
               "Branch": "$branch",
               "Type": "$type",
-              "subType": subType??null,
-              "Building": building??null,
-              "Floor": floor??null,
-              "Room": symbol??null,
+              "subType": subType ?? null,
+              "Building": building ?? null,
+              "Floor": floor ?? null,
+              "Room": symbol ?? null,
               "EditorId": "${user!.uid}",
               "EditorName": "${userData[0]['Name']}",
               "Details": "${details.text}",
@@ -237,53 +250,45 @@ class _EditRequestPageState extends State<EditRequestPage> {
                         "أخرى"
                       ]
                           .map((e) => DropdownMenuItem(
-                        child: Text("$e",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Color(0xff000000),
-                            )),
-                        value: e,
-                      ))
+                                child: Text("$e",
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      color: Color(0xff000000),
+                                    )),
+                                value: e,
+                              ))
                           .toList(),
                       onChanged: (a) {
                         subType = null;
                         setState(() {
                           type = "$a";
-                          if(a=="كهرباء"){
+                          if (a == "كهرباء") {
                             subTypeIndex = 0;
                             isSubType = true;
-                          }
-                          else if(a=="النت"){
+                          } else if (a == "النت") {
                             subTypeIndex = 1;
                             isSubType = true;
-                          }
-                          else if(a=="تكييفات"){
+                          } else if (a == "تكييفات") {
                             subTypeIndex = 3;
                             isSubType = true;
-                          }
-                          else if(a=="سباكة"){
+                          } else if (a == "سباكة") {
                             subTypeIndex = 4;
                             isSubType = true;
-                          }
-                          else if(a=="نجارة"){
+                          } else if (a == "نجارة") {
                             subTypeIndex = 5;
                             isSubType = true;
-                          }
-                          else if(a=="زجاج"){
-                            subTypeIndex =6;
+                          } else if (a == "زجاج") {
+                            subTypeIndex = 6;
                             isSubType = true;
-                          }
-                          else{
+                          } else {
                             //subTypeIndex =2;
                             isSubType = false;
                           }
-
                         });
                       },
                       value: type,
                       menuMaxHeight: 300,
                       borderRadius: BorderRadius.circular(20),
-
                     ),
                     SizedBox(
                       height: 20,
@@ -299,13 +304,13 @@ class _EditRequestPageState extends State<EditRequestPage> {
                         ),
                         items: subTypeList[subTypeIndex]
                             .map((e) => DropdownMenuItem(
-                          child: Text("$e",
-                              style: const TextStyle(
-                                fontSize: 18,
-                                color: Color(0xff000000),
-                              )),
-                          value: e,
-                        ))
+                                  child: Text("$e",
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        color: Color(0xff000000),
+                                      )),
+                                  value: e,
+                                ))
                             .toList(),
                         onChanged: (a) {
                           setState(() {
@@ -315,7 +320,6 @@ class _EditRequestPageState extends State<EditRequestPage> {
                         value: subType,
                         menuMaxHeight: 300,
                         borderRadius: BorderRadius.circular(20),
-
                       ),
                     ),
                     Container(
@@ -338,7 +342,7 @@ class _EditRequestPageState extends State<EditRequestPage> {
                         onChanged: (val) {
                           setState(() {
                             building = val;
-                            floorIndex=0;
+                            floorIndex = 0;
                           });
                         }),
                     RadioListTile(
@@ -355,8 +359,8 @@ class _EditRequestPageState extends State<EditRequestPage> {
                         onChanged: (val) {
                           setState(() {
                             building = val;
-                            floorIndex=1;
-                            floor=null;
+                            floorIndex = 1;
+                            floor = null;
                           });
                         }),
                     const Text(
@@ -372,13 +376,13 @@ class _EditRequestPageState extends State<EditRequestPage> {
                       ),
                       items: floorList[floorIndex]
                           .map((e) => DropdownMenuItem(
-                        child: Text("$e",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Color(0xff000000),
-                            )),
-                        value: e,
-                      ))
+                                child: Text("$e",
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      color: Color(0xff000000),
+                                    )),
+                                value: e,
+                              ))
                           .toList(),
                       onChanged: (a) {
                         setState(() {
@@ -388,7 +392,6 @@ class _EditRequestPageState extends State<EditRequestPage> {
                       value: floor,
                       menuMaxHeight: 300,
                       borderRadius: BorderRadius.circular(20),
-
                     ),
                     Container(
                       margin: EdgeInsets.only(top: 10),
@@ -490,7 +493,6 @@ class _EditRequestPageState extends State<EditRequestPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         FloatingActionButton(
-
                           onPressed: () async {
                             await uploadImagesCamera();
                           },
@@ -498,8 +500,10 @@ class _EditRequestPageState extends State<EditRequestPage> {
                         )
                       ],
                     ),
-                    SizedBox(height: 20,),
-                    if(imgUrl != null)
+                    SizedBox(
+                      height: 20,
+                    ),
+                    if (imgUrl != null)
                       Visibility(
                         visible: true,
                         child: Container(
@@ -508,8 +512,7 @@ class _EditRequestPageState extends State<EditRequestPage> {
                             child: Image.network(
                               "$imgUrl",
                               fit: BoxFit.cover,
-                            )
-                        ),
+                            )),
                       ),
                   ],
                 ),

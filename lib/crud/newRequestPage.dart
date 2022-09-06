@@ -8,7 +8,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-
 class NewRequestPage extends StatefulWidget {
   const NewRequestPage({Key? key}) : super(key: key);
 
@@ -61,13 +60,11 @@ class _NewRequestPageState extends State<NewRequestPage> {
   PlatformFile? pickedFile;
   var url;
 
-
   Future uploadImagesCamera() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result == null) return;
     setState(() {
       pickedFile = result.files.first;
-
     });
   }
 
@@ -168,15 +165,14 @@ class _NewRequestPageState extends State<NewRequestPage> {
           btnOkIcon: Icons.done,
           btnOkText: "نعم,ارسال",
           btnOkOnPress: () async {
-            if(pickedFile != null ) {
+            if (pickedFile != null) {
               final path = 'problemImages/${pickedFile!.name}';
               final file = File(pickedFile!.path!);
               final ref = FirebaseStorage.instance.ref().child(path);
-              ref.putFile(file);
-               url = await ref.getDownloadURL();
-            }
-            else{
-               url = null;
+              await ref.putFile(file);
+              url = await ref.getDownloadURL();
+            } else {
+              url = null;
             }
             await problemRef
                 .doc('${new DateTime.now().millisecondsSinceEpoch}')
@@ -184,12 +180,12 @@ class _NewRequestPageState extends State<NewRequestPage> {
               "Branch": "$branch",
               "Type": "$type",
               "subType": subType ?? null,
-              "Building": building??null,
+              "Building": building ?? null,
               "Floor": floor ?? null,
               "Room": symbol ?? null,
               "SenderId": "${user!.uid}",
               "Sender": "${userData[0]['Name']}",
-              "SenderIdNum" :"${userData[0]['Id']}",
+              "SenderIdNum": "${userData[0]['Id']}",
               "Status": "جار",
               "Details": "${details.text}",
               "Date":
@@ -362,36 +358,35 @@ class _NewRequestPageState extends State<NewRequestPage> {
                         menuMaxHeight: 300,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                  Visibility(
-                    visible: isSubType,
-                    child: DropdownButton(
-                      dropdownColor: const Color(0xff2986cc),
-                      isExpanded: true,
-                      hint: const Text(
-                        "تحديد المشكلة",
-                        style: TextStyle(fontSize: 18),
+                      Visibility(
+                        visible: isSubType,
+                        child: DropdownButton(
+                          dropdownColor: const Color(0xff2986cc),
+                          isExpanded: true,
+                          hint: const Text(
+                            "تحديد المشكلة",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          items: subTypeList[subTypeIndex]
+                              .map((e) => DropdownMenuItem(
+                                    child: Text("$e",
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: Color(0xff000000),
+                                        )),
+                                    value: e,
+                                  ))
+                              .toList(),
+                          onChanged: (a) {
+                            setState(() {
+                              subType = "$a";
+                            });
+                          },
+                          value: subType,
+                          menuMaxHeight: 300,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-                      items: subTypeList[subTypeIndex]
-                          .map((e) => DropdownMenuItem(
-                        child: Text("$e",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Color(0xff000000),
-                            )),
-                        value: e,
-                      ))
-                          .toList(),
-                      onChanged: (a) {
-                        setState(() {
-                          subType = "$a";
-                        });
-                      },
-                      value: subType,
-                      menuMaxHeight: 300,
-                      borderRadius: BorderRadius.circular(20),
-
-                    ),
-                  ),
                       const SizedBox(
                         height: 20,
                       ),
@@ -602,7 +597,6 @@ class _NewRequestPageState extends State<NewRequestPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           FloatingActionButton(
-
                             onPressed: () async {
                               await uploadImagesCamera();
                             },
@@ -610,19 +604,20 @@ class _NewRequestPageState extends State<NewRequestPage> {
                           )
                         ],
                       ),
-                      SizedBox(height: 20,),
-                      if(pickedFile != null)
-                      Visibility(
-                        visible: pickedFile != null,
-                        child: Container(
-                            width: double.infinity,
-                            color: Colors.blue[100],
-                            child: Image.file(
-                                    File(pickedFile!.path!),
-                                    fit: BoxFit.cover,
-                                  )
-                                ),
+                      SizedBox(
+                        height: 20,
                       ),
+                      if (pickedFile != null)
+                        Visibility(
+                          visible: pickedFile != null,
+                          child: Container(
+                              width: double.infinity,
+                              color: Colors.blue[100],
+                              child: Image.file(
+                                File(pickedFile!.path!),
+                                fit: BoxFit.cover,
+                              )),
+                        ),
                     ],
                   ),
                 ),
