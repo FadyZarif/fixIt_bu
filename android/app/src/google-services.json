@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "829776278978",
+    "project_id": "fixit-n",
+    "storage_bucket": "fixit-n.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829776278978:android:5c3a15f986415064f9925b",
+        "android_client_info": {
+          "package_name": "com.example.shubrafaculty"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "829776278978-softccfgv8asmgstrgjlapdssub7o5vd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTvoZM5oXmVmpexPIekVyskOItuVsVcIQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "829776278978-softccfgv8asmgstrgjlapdssub7o5vd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
