@@ -4,6 +4,7 @@ import 'package:course/crud/editRequestPage.dart';
 import 'package:course/viewProblem.dart';
 import 'package:dropdown_button2/custom_dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' as intl;
 
 class ProblemsPage extends StatefulWidget {
   const ProblemsPage({Key? key}) : super(key: key);
@@ -426,7 +427,8 @@ class _ProblemsPageState extends State<ProblemsPage> {
                                                               .id)
                                                           .update({
                                                         "Status": "تم",
-                                                        "fixTime": "${DateTime.now().year}-0${DateTime.now().month}-${DateTime.now().day}"
+                                                        "fixTime":'${intl.DateFormat.yMMMMd().format(DateTime.now())}, ${TimeOfDay.now().format(context).toString()}',
+
                                                       });
                                                     } else if (value == "جار") {
                                                       SelectedStatus = "جار";

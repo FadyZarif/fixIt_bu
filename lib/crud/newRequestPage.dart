@@ -7,6 +7,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart' as intl;
+import 'package:path/path.dart' as path;
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+
+
 
 class NewRequestPage extends StatefulWidget {
   const NewRequestPage({Key? key}) : super(key: key);
@@ -16,17 +22,21 @@ class NewRequestPage extends StatefulWidget {
 }
 
 class _NewRequestPageState extends State<NewRequestPage> {
+  final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
   GlobalKey<FormState> formstate = new GlobalKey<FormState>();
 
   //TextEditingController floor = new TextEditingController();
   TextEditingController number = new TextEditingController();
   TextEditingController details = new TextEditingController();
-  var branch, building;
-  var type, symbol, floor, imgUrl;
+  var type, branch, building, symbol, floor, imgUrl;
   String? subType;
   List userData = [];
   User? user = FirebaseAuth.instance.currentUser;
-  int subTypeIndex = 2, floorIndex = 0;
+  int subTypeIndex = 2, floorIndex = 0, buildingListIndex = 0;
+  List<List> buildingList = [
+    ['المبني الرئيسي', 'المبني الفرعي'],
+    ['المبني الرئيسي'],
+  ];
   List<List> subTypeList = [
     [
       'اعطال اضائه',
@@ -52,20 +62,37 @@ class _NewRequestPageState extends State<NewRequestPage> {
     ['كسر', 'تركيب شبابيك الوميتال', 'تركيب زجاج'],
   ];
   List<List> floorList = [
-    ['0', '1', '2', '3', '4', '5', '6', '7', '8'],
+    ['-1','0', '1', '2', '3', '4', '5', '6', '7', '8'],
     ['0', '1', '2', '3', '4'],
   ];
-  bool isSubType = false;
+  bool isSubType = false, isbuilding = false, isfloor = false, isroom = false;
 
-  PlatformFile? pickedFile;
   var url;
+  File? file;
+  var imagepicker = ImagePicker();
+  var imgPicked;
+  String? nameimage;
+
+  Future uploadImagesGallery() async {
+    imgPicked = await imagepicker.pickImage(source: ImageSource.gallery);
+    if (imgPicked != null) {
+      setState(() {});
+      file = File(imgPicked.path);
+      nameimage = path.basename(imgPicked.path);
+    } else {
+      return;
+    }
+  }
 
   Future uploadImagesCamera() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result == null) return;
-    setState(() {
-      pickedFile = result.files.first;
-    });
+    imgPicked = await imagepicker.pickImage(source: ImageSource.camera);
+    if (imgPicked != null) {
+      setState(() {});
+      file = File(imgPicked.path);
+      nameimage = path.basename(imgPicked.path);
+    } else {
+      return;
+    }
   }
 
   getData() {
@@ -80,6 +107,7 @@ class _NewRequestPageState extends State<NewRequestPage> {
 
   @override
   void initState() {
+    _pdfViewerKey.currentState?.openBookmarkView();
     getData();
     super.initState();
   }
@@ -165,9 +193,9 @@ class _NewRequestPageState extends State<NewRequestPage> {
           btnOkIcon: Icons.done,
           btnOkText: "نعم,ارسال",
           btnOkOnPress: () async {
-            if (pickedFile != null) {
-              final path = 'problemImages/${pickedFile!.name}';
-              final file = File(pickedFile!.path!);
+            if (imgPicked != null) {
+              final path = 'problemImages/${nameimage}';
+              final file = File(imgPicked.path);
               final ref = FirebaseStorage.instance.ref().child(path);
               await ref.putFile(file);
               url = await ref.getDownloadURL();
@@ -189,7 +217,7 @@ class _NewRequestPageState extends State<NewRequestPage> {
               "Status": "جار",
               "Details": "${details.text}",
               "Date":
-                  "${DateTime.now().year}-0${DateTime.now().month}-${DateTime.now().day}",
+                  '${intl.DateFormat.yMMMMd().format(DateTime.now())}, ${TimeOfDay.now().format(context).toString()}',
               "Technical": [],
               "TechnicalId": " ",
               "Track": " ",
@@ -260,39 +288,255 @@ class _NewRequestPageState extends State<NewRequestPage> {
                         ": اختر الفرع",
                         style: TextStyle(color: Colors.black, fontSize: 20),
                       ),
-                      RadioListTile(
-                          title: const Text("الخلفاوي",
-                              textDirection: TextDirection.rtl,
-                              style: TextStyle(fontSize: 18)),
-                          activeColor: const Color(0xff2986cc),
-                          selected: branch == "الخلفاوي",
-                          tileColor: Colors.black.withOpacity(0.2),
-                          secondary: const Icon(Icons.apartment),
-                          value: "الخلفاوي",
-                          groupValue: branch,
-                          onChanged: (val) {
+                      DropdownButton(
+                        dropdownColor: const Color(0xff2986cc),
+                        isExpanded: true,
+                        hint: const Text(
+                          "اختر الفرع",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        items: [
+                          "الخلفاوي",
+                          "روض الفرج",
+                        ]
+                            .map((e) => DropdownMenuItem(
+                                  child: Text("$e",
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        color: Color(0xff000000),
+                                      )),
+                                  value: e,
+                                ))
+                            .toList(),
+                        onChanged: (a) {
+                          building = null;
+                          setState(() {
+                            branch = "$a";
+                            if (a == "الخلفاوي") {
+                              isbuilding = true;
+                              buildingListIndex = 0;
+                            } else if (a == "روض الفرج") {
+                              isbuilding = true;
+                              buildingListIndex = 1;
+                            }
+                          });
+                        },
+                        value: branch,
+                        menuMaxHeight: 300,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      Visibility(
+                        visible: isbuilding,
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          child: const Text(
+                            ": اختر المبني",
+                            style: TextStyle(color: Colors.black, fontSize: 20),
+                          ),
+                        ),
+                      ),
+                      Visibility(
+                        visible: isbuilding,
+                        child: DropdownButton(
+                          dropdownColor: const Color(0xff2986cc),
+                          isExpanded: true,
+                          hint: const Text(
+                            "اختر المبني",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          items: buildingList[buildingListIndex]
+                              .map((e) => DropdownMenuItem(
+                                    child: Text("$e",
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: Color(0xff000000),
+                                        )),
+                                    value: e,
+                                  ))
+                              .toList(),
+                          onChanged: (a) {
+                            floor = null;
                             setState(() {
-                              branch = val;
-                              print(branch);
+                              building = "$a";
+                              isfloor = true;
+                              if (branch == 'الخلفاوي' && building == "المبني الرئيسي") {
+                                floorIndex = 0;
+                              } else  {
+                                floorIndex = 1;
+                              }
                             });
-                          }),
-                      RadioListTile(
-                          title: const Text("روض الفرج",
-                              textDirection: TextDirection.rtl,
-                              style: TextStyle(fontSize: 18)),
-                          activeColor: const Color(0xff2986cc),
-                          selected: branch == "روض الفرج",
-                          tileColor: Colors.black.withOpacity(0.2),
-                          selectedTileColor: const Color(0xff2986cc),
-                          secondary: const Icon(Icons.apartment),
-                          value: "روض الفرج",
-                          groupValue: branch,
-                          onChanged: (val) {
+                          },
+                          value: building,
+                          menuMaxHeight: 300,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+
+                      Visibility(
+                        visible: isfloor,
+                        child: const Text(
+                          ": الطابق",
+                          style: TextStyle(color: Colors.black, fontSize: 20),
+                        ),
+                      ),
+                      Visibility(
+                        visible: isfloor,
+                        child: DropdownButton(
+                          dropdownColor: const Color(0xff2986cc),
+                          isExpanded: true,
+                          hint: const Text(
+                            "اختر الطابق",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          items: floorList[floorIndex]
+                              .map((e) => DropdownMenuItem(
+                                    child: Text("$e",
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: Color(0xff000000),
+                                        )),
+                                    value: e,
+                                  ))
+                              .toList(),
+                          onChanged: (a) {
+                            symbol = null;
+
                             setState(() {
-                              branch = val;
-                              print(branch);
+                              floor = "$a";
+                              isroom = true;
                             });
-                          }),
+                          },
+                          value: floor,
+                          menuMaxHeight: 300,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      // TextFormField(
+                      //   controller: floor,
+                      //   textDirection: TextDirection.rtl,
+                      //   maxLines: 1,
+                      //   cursorColor: Color(0xff2986cc),
+                      //   maxLength: 1,
+                      //   autovalidateMode: AutovalidateMode.onUserInteraction,
+                      //   keyboardType: TextInputType.numberWithOptions(
+                      //       decimal: true, signed: false),
+                      //   style:
+                      //       TextStyle(fontSize: 18, color: Color(0xff2986cc)),
+                      //   decoration: const InputDecoration(
+                      //     hintText: "ادخل الطابق",
+                      //     hintTextDirection: TextDirection.rtl,
+                      //     hintStyle:
+                      //         TextStyle(fontSize: 18, color: Colors.black),
+                      //     filled: true,
+                      //     focusColor: Color(0xff2986cc),
+                      //     counterStyle: TextStyle(color: Colors.black),
+                      //     border: OutlineInputBorder(),
+                      //     focusedBorder: OutlineInputBorder(
+                      //       borderSide:
+                      //           BorderSide(width: 2, color: Color(0xff2986cc)),
+                      //     ),
+                      //   ),
+                      //   textInputAction: TextInputAction.next,
+                      //   validator: (text) {
+                      //     if (text!.isEmpty) {
+                      //       return "لا يمكن ان يكون فارغاً";
+                      //     }
+                      //     return null;
+                      //   },
+                      // ),
+                      Visibility(
+                        visible: isroom,
+                        child: Container(
+                          height: 200,
+                          child:
+                          branch == 'الخلفاوي' && building == 'المبني الفرعي' ?
+                          SfPdfViewer.asset(
+                            'assets/kc${floor}.pdf',
+                            key: _pdfViewerKey,
+                          ):
+                          branch == 'الخلفاوي' && building == 'المبني الرئيسي' ?
+                          SfPdfViewer.asset(
+                            'assets/km${floor}.pdf',
+                            key: _pdfViewerKey,
+                          ):SfPdfViewer.asset(
+                            'assets/r${floor}.pdf',
+                            key: _pdfViewerKey,
+                          )
+                          ,
+                        ),
+                      ),
+                      Visibility(
+                        visible: isroom,
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          child: const Text(
+                            ": القاعة",
+                            style: TextStyle(color: Colors.black, fontSize: 20),
+                          ),
+                        ),
+                      ),
+                      Visibility(
+                        visible: isroom,
+                        child: DropdownButton(
+                          menuMaxHeight: 300,
+                          isExpanded: true,
+                          dropdownColor: const Color(0xff2986cc),
+                          hint: const Text(
+                            "اختر القاعة",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          items: [
+                            "0",
+                            "SB1-1",
+                            "SB1-2",
+                            "SB1-3",
+                            "SB1-4",
+                            "SB1-5",
+                            "SB1-6",
+                            "SB1-7",
+                            "SB1-8",
+                            "SB2-1",
+                            "SB2-2",
+                            "SB2-3",
+                            "SB2-4",
+                            "SB2-5",
+                            "SB2-6",
+                            "SB2-7",
+                            "SB2-8",
+                            "SB3-1",
+                            "SB3-2",
+                            "SB3-3",
+                            "SB3-4",
+                            "SB3-5",
+                            "SB3-6",
+                            "SB3-7",
+                            "SB3-8",
+                            "SB4-1",
+                            "SB4-2",
+                            "SB4-3",
+                            "SB4-4",
+                            "SB4-5",
+                            "SB4-6",
+                            "SB4-7",
+                            "SB4-8",
+                          ]
+                              .map((e) => DropdownMenuItem(
+                                    child: Text("$e",
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: Color(0xff000000),
+                                        )),
+                                    value: e,
+                                  ))
+                              .toList(),
+                          onChanged: (a) {
+                            setState(() {
+                              symbol = "$a";
+                            });
+                          },
+                          value: symbol,
+                        ),
+                      ),
                       const Text(
                         ": نوع المشكلة",
                         style: TextStyle(color: Colors.black, fontSize: 20),
@@ -358,6 +602,9 @@ class _NewRequestPageState extends State<NewRequestPage> {
                         menuMaxHeight: 300,
                         borderRadius: BorderRadius.circular(20),
                       ),
+                      const SizedBox(
+                        height: 20,
+                      ),
                       Visibility(
                         visible: isSubType,
                         child: DropdownButton(
@@ -386,180 +633,6 @@ class _NewRequestPageState extends State<NewRequestPage> {
                           menuMaxHeight: 300,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-
-                      Container(
-                        margin: const EdgeInsets.only(top: 10),
-                        child: const Text(
-                          ": اختر المبني",
-                          style: TextStyle(color: Colors.black, fontSize: 20),
-                        ),
-                      ),
-                      RadioListTile(
-                          title: const Text("المبني الرئيسي",
-                              textDirection: TextDirection.rtl,
-                              style: TextStyle(fontSize: 18)),
-                          activeColor: const Color(0xff2986cc),
-                          selected: building == "المبني الرئيسي",
-                          tileColor: Colors.black.withOpacity(0.5),
-                          secondary: const Icon(Icons.apartment),
-                          value: "المبني الرئيسي",
-                          groupValue: building,
-                          onChanged: (val) {
-                            setState(() {
-                              building = val;
-                              floorIndex = 0;
-                            });
-                          }),
-                      RadioListTile(
-                          title: const Text("المبني الفرعي",
-                              textDirection: TextDirection.rtl,
-                              style: TextStyle(fontSize: 18)),
-                          activeColor: const Color(0xff2986cc),
-                          selected: building == "المبني الفرعي",
-                          tileColor: Colors.black.withOpacity(0.5),
-                          selectedTileColor: const Color(0xff2986cc),
-                          secondary: const Icon(Icons.apartment),
-                          value: "المبني الفرعي",
-                          groupValue: building,
-                          onChanged: (val) {
-                            setState(() {
-                              building = val;
-                              floorIndex = 1;
-                              floor = null;
-                            });
-                          }),
-                      const Text(
-                        ": الطابق",
-                        style: TextStyle(color: Colors.black, fontSize: 20),
-                      ),
-                      DropdownButton(
-                        dropdownColor: const Color(0xff2986cc),
-                        isExpanded: true,
-                        hint: const Text(
-                          "اختر الطابق",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        items: floorList[floorIndex]
-                            .map((e) => DropdownMenuItem(
-                                  child: Text("$e",
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        color: Color(0xff000000),
-                                      )),
-                                  value: e,
-                                ))
-                            .toList(),
-                        onChanged: (a) {
-                          setState(() {
-                            floor = "$a";
-                          });
-                        },
-                        value: floor,
-                        menuMaxHeight: 300,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      // TextFormField(
-                      //   controller: floor,
-                      //   textDirection: TextDirection.rtl,
-                      //   maxLines: 1,
-                      //   cursorColor: Color(0xff2986cc),
-                      //   maxLength: 1,
-                      //   autovalidateMode: AutovalidateMode.onUserInteraction,
-                      //   keyboardType: TextInputType.numberWithOptions(
-                      //       decimal: true, signed: false),
-                      //   style:
-                      //       TextStyle(fontSize: 18, color: Color(0xff2986cc)),
-                      //   decoration: const InputDecoration(
-                      //     hintText: "ادخل الطابق",
-                      //     hintTextDirection: TextDirection.rtl,
-                      //     hintStyle:
-                      //         TextStyle(fontSize: 18, color: Colors.black),
-                      //     filled: true,
-                      //     focusColor: Color(0xff2986cc),
-                      //     counterStyle: TextStyle(color: Colors.black),
-                      //     border: OutlineInputBorder(),
-                      //     focusedBorder: OutlineInputBorder(
-                      //       borderSide:
-                      //           BorderSide(width: 2, color: Color(0xff2986cc)),
-                      //     ),
-                      //   ),
-                      //   textInputAction: TextInputAction.next,
-                      //   validator: (text) {
-                      //     if (text!.isEmpty) {
-                      //       return "لا يمكن ان يكون فارغاً";
-                      //     }
-                      //     return null;
-                      //   },
-                      // ),
-                      Container(
-                        margin: const EdgeInsets.only(top: 10),
-                        child: const Text(
-                          ": القاعة",
-                          style: TextStyle(color: Colors.black, fontSize: 20),
-                        ),
-                      ),
-                      DropdownButton(
-                        menuMaxHeight: 300,
-                        isExpanded: true,
-                        dropdownColor: const Color(0xff2986cc),
-                        hint: const Text(
-                          "اختر القاعة",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        items: [
-                          "0",
-                          "SB1-1",
-                          "SB1-2",
-                          "SB1-3",
-                          "SB1-4",
-                          "SB1-5",
-                          "SB1-6",
-                          "SB1-7",
-                          "SB1-8",
-                          "SB2-1",
-                          "SB2-2",
-                          "SB2-3",
-                          "SB2-4",
-                          "SB2-5",
-                          "SB2-6",
-                          "SB2-7",
-                          "SB2-8",
-                          "SB3-1",
-                          "SB3-2",
-                          "SB3-3",
-                          "SB3-4",
-                          "SB3-5",
-                          "SB3-6",
-                          "SB3-7",
-                          "SB3-8",
-                          "SB4-1",
-                          "SB4-2",
-                          "SB4-3",
-                          "SB4-4",
-                          "SB4-5",
-                          "SB4-6",
-                          "SB4-7",
-                          "SB4-8",
-                        ]
-                            .map((e) => DropdownMenuItem(
-                                  child: Text("$e",
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        color: Color(0xff000000),
-                                      )),
-                                  value: e,
-                                ))
-                            .toList(),
-                        onChanged: (a) {
-                          setState(() {
-                            symbol = "$a";
-                          });
-                        },
-                        value: symbol,
                       ),
                       Container(
                         margin: const EdgeInsets.only(top: 10),
@@ -598,23 +671,32 @@ class _NewRequestPageState extends State<NewRequestPage> {
                         children: [
                           FloatingActionButton(
                             onPressed: () async {
-                              await uploadImagesCamera();
+                              await uploadImagesGallery();
                             },
                             child: Icon(Icons.photo),
+                          ),
+                          SizedBox(
+                            width: 20,
+                          ),
+                          FloatingActionButton(
+                            onPressed: () async {
+                              await uploadImagesCamera();
+                            },
+                            child: Icon(Icons.camera_alt_outlined),
                           )
                         ],
                       ),
                       SizedBox(
                         height: 20,
                       ),
-                      if (pickedFile != null)
+                      if (imgPicked != null)
                         Visibility(
-                          visible: pickedFile != null,
+                          visible: imgPicked != null,
                           child: Container(
                               width: double.infinity,
                               color: Colors.blue[100],
                               child: Image.file(
-                                File(pickedFile!.path!),
+                                File(imgPicked!.path!),
                                 fit: BoxFit.cover,
                               )),
                         ),

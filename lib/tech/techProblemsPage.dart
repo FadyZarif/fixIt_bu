@@ -1,10 +1,11 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:course/crud/editRequestPage.dart';
+import 'package:course/user/userViewProblem.dart';
 import 'package:dropdown_button2/custom_dropdown_button2.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart' as intl;
 import '../viewProblem.dart';
 
 class TechProblemsPage extends StatefulWidget {
@@ -192,7 +193,7 @@ class _TechProblemsPageState extends State<TechProblemsPage> {
                                 onTap: () {
                                   Navigator.of(context).push(
                                       MaterialPageRoute(builder: (context) {
-                                    return ViewProblem(
+                                    return UserViewProblem(
                                       docid: (snapshot.data! as QuerySnapshot)
                                           .docs.reversed.toList()[i]
                                           .id,
@@ -341,6 +342,8 @@ class _TechProblemsPageState extends State<TechProblemsPage> {
                                                             .id)
                                                         .update({
                                                       "Status": "تم",
+                                                      "fixTime":'${intl.DateFormat.yMMMMd().format(DateTime.now())}, ${TimeOfDay.now().format(context).toString()}',
+
                                                     });
                                                   } else if (value == "جار") {
                                                     SelectedStatus = "جار";
@@ -351,6 +354,7 @@ class _TechProblemsPageState extends State<TechProblemsPage> {
                                                             .id)
                                                         .update({
                                                       "Status": "جار",
+                                                      "fixTime": null
                                                     });
                                                   }
                                                 },

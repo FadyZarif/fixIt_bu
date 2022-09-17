@@ -50,6 +50,9 @@ dependencies:
   awesome_dialog: ^2.2.1
   syncfusion_flutter_charts: ^20.2.44
   flutter_multi_select_items: ^0.4.2
+  intl: ^0.17.0
+  syncfusion_flutter_pdfviewer: ^20.2.49-beta
+
 
 dev_dependencies:
   flutter_test:
