@@ -35,7 +35,8 @@ class _OneState extends State<One> {
           'Password': '${myPassword!.text}',
           'Role': '${selectedRole??'Student'}',
           'Name': '${myName!.text}',
-          'ID': "${FirebaseAuth.instance.currentUser!.uid}"
+          'ID': "${FirebaseAuth.instance.currentUser!.uid}",
+          'AttempLogin' : 0
         });
         print(userCredential);
       } on FirebaseAuthException catch (e) {

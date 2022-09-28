@@ -2,6 +2,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_multi_select_items/flutter_multi_select_items.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' as intl;
 
 class AssignedList extends StatefulWidget {
   final docid;
@@ -46,6 +47,7 @@ class _AssignedListState extends State<AssignedList> {
                       {
                         "Technical": allSelectedName,
                         "TechnicalId": allSelectedID,
+                        "submitForTechinalTime": '${intl.DateFormat.yMMMMd().format(DateTime.now())}, ${TimeOfDay.now().format(context).toString()}'
                       });
                   Navigator.of(context).pop();
                 }
