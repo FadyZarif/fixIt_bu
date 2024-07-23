@@ -42,10 +42,11 @@ Then this problem is assigned to the specialized maintenance technician, and aft
   <img width="235" height="525" src="assets/project_images/statistics.gif">
 </p>
 
+## For Maintenance Technicians
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Features:
+1.  The repair requests assigned to him by the administrator are displayed to him, not all requests.
+After fixing the problem, the order status can be updated to Done and the repair date is added to the request information.
+<p align="center">
+  <img width="235" height="525" src="assets/project_images/maintenance_technician.gif">
+</p>
